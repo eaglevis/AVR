@@ -25,14 +25,14 @@ uint8_t packetBuf[MAX_PACKET_LEN];
 
 ISR(INT0_vect)//, ISR_NOBLOCK)
 {
-//	//waiting = waiting+1%3;
-//	waiting++;
-//	if (waiting > 1) return;
-//
-//	rReadPacket(packetBuf);
-//	waiting--;
-//	flags = 1;
-//	lcdChar('w',LCD_BLACK);
+	//waiting = waiting+1%3;
+	waiting++;
+	if (waiting > 1) return;
+
+	rReadPacket(packetBuf);
+	waiting--;
+	flags = 1;
+	//lcdChar('i',LCD_BLACK);
 }
 
 uint8_t setup(void)
@@ -99,6 +99,8 @@ int main()
 
 	rSelectBank(0);
 
+	uint8_t i = 0;
+
 	//TX
 	if (PINC & (1<<PC0))
 	{
@@ -106,9 +108,10 @@ int main()
 		rPowerUp();
 		rSetCE(1);
 		uint8_t packet[] = {0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,0x78};
-		for(;set > 0;)
+		while(set > 0)
 		{
-			rSendPacket(packet,sizeof(packet));
+			rSendPacket(&i,sizeof(packet));
+			++i;
 			_delay_ms(1000);
 		}
 	}
@@ -122,27 +125,37 @@ int main()
 		rPowerUp();
 		rSetCE(1);
 		rRXmode();
-		for(;set > 0;)
+
+		sei();
+
+		CLR(PORT,LED_2);
+		while(set > 0)
 		{
 
-//			if (flags)
-//			{
-//				rReadPacket(packetBuf);
-//				//process packet
-//				lcdInt(packetBuf[0], LCD_BLACK);
-//				lcdChar(',', LCD_BLACK);
-//				flags=0;
-//			}
-//			if (waiting--)
-//			{
-//				//read next packet
-//			}
-			if (rReadPacket(packetBuf))
+			if (flags)
 			{
-				lcdInt(packetBuf[0], LCD_BLACK);
-				lcdInt(packetBuf[1], LCD_BLACK);
-				lcdChar(',',LCD_BLACK);
+				//rReadPacket(packetBuf);
+				//process packet
+				if (packetBuf[0] != i++)
+				{
+					lcdInt(packetBuf[0], LCD_BLACK);
+					SET(PORT,LED_2);
+				}
+				//lcdChar(',', LCD_BLACK);
+				flags=0;
 			}
+			if (waiting)
+			{
+				waiting--;
+				rReadPacket(packetBuf);
+				flags = 1;
+			}
+//			if (rReadPacket(packetBuf))
+//			{
+//				lcdInt(packetBuf[0], LCD_BLACK);
+//				lcdInt(packetBuf[1], LCD_BLACK);
+//				lcdChar(',',LCD_BLACK);
+//			}
 
 			TOG(PORT, LED_1);
 			_delay_ms(100);

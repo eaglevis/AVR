@@ -116,8 +116,8 @@ uint8_t rInit()
 		rWriteRegister_P(i,dataBank1[i],4);
     }
 	rWriteRegister_P(0x0e,rampCurve,sizeof(rampCurve));
-	rWriteRegister_P(4,cmd_tog1,sizeof(bank0Reg4_tog1));
-	rWriteRegister_P(4,cmd_tog2,sizeof(bank0Reg4_tog2));
+	rWriteRegister_P(4,bank0Reg4_tog1,sizeof(bank0Reg4_tog1));
+	rWriteRegister_P(4,bank0Reg4_tog2,sizeof(bank0Reg4_tog2));
 	_delay_ms(50);
 	//Check the ChipID
 	if (rReadRegister(8) != 0x63)
@@ -166,17 +166,17 @@ uint8_t rReadPacket(uint8_t *buf)
 void rSendPacket(uint8_t * payload, uint8_t len)
 {
 	TOG(PORT,LED_2);
-	rTXmode();
+	//rTXmode();
 	uint8_t status;
 	do
 	{
-		status = rReadRegister(STATUS);
-	} while (status & 1); //tx full
+		status = rReadRegister(FIFO_STATUS);
+	} while (status & FIFO_STATUS_TX_FULL); //tx full
 
 
 	SET(PORT,R_CSN);
 	CLR(PORT, R_CSN);
-	spiTransfer(W_TX_PAYLOAD_NOACK_CMD); //TX w/ ACK
+	spiTransfer(WR_TX_PLOAD); //TX w/ ACK
 
 	/*while (len--)
 	{
